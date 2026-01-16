@@ -3,102 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>北京买房 vs 租房财务决策计算器</title>
+    <title>2026年北京房产决策精算引擎</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
         body {
             font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
         }
         .result-panel-placeholder {
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%;
-            border: 2px dashed #e5e7eb;
+            border: 2px dashed #e2e8f0;
             border-radius: 0.5rem;
+        }
+        .formula-term {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .formula-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            text-align: center;
+        }
+        .formula-component {
+            font-family: 'Courier New', Courier, monospace;
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            background-color: #f8fafc;
+            white-space: nowrap;
+        }
+        .formula-arrow {
+            color: #94a3b8; /* slate-400 */
+            font-size: 1.5rem;
+            line-height: 1.5rem;
+        }
+        .formula-explanation {
+            font-size: 0.8rem;
+            color: #475569; /* slate-600 */
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted #64748b; /* slate-500 */
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #1e293b; /* slate-800 */
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 140%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: 'Noto Sans SC', sans-serif; /* Use regular font for tooltip */
+            font-size: 0.75rem; /* smaller for tooltip */
+            line-height: 1.5;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1e293b transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8">
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">买房 vs 租房 财务决策计算器</h1>
-            <p class="text-gray-600 mt-2">量化分析，助您做出更明智的财务选择</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">2026年北京房产决策精算引擎</h1>
+            <p class="text-gray-600 mt-2">基于净资产终值对比法，模拟N年后的财务差异</p>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Input Panel -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-2xl font-bold mb-6 border-b pb-4">输入参数</h2>
-                <form id="calculator-form" class="space-y-4">
+        <!-- Module 1: Formulas -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-6">核心计算模型 (将鼠标悬停在字母上查看解释)</h2>
+            <div class="overflow-x-auto p-2">
+                <div class="flex items-start justify-center space-x-2">
+                    <!-- C_buy -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            <span class="tooltip"><span class="formula-term">C_buy</span><span class="tooltiptext">C_buy: 买房总年化成本</span></span>
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">买房总<br>年化成本</div>
+                    </div>
+                    <div class="mt-5 text-2xl font-mono">=</div>
+                    <!-- I -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            <span class="tooltip"><span class="formula-term">I</span><span class="tooltiptext">I: 年度贷款利息支出<br>(基于贷款总额和利率计算)</span></span>
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">年度贷款<br>利息支出</div>
+                    </div>
+                    <div class="mt-5 text-2xl font-mono">+</div>
+                    <!-- Opportunity Cost -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            [(<span class="tooltip"><span class="formula-term">D</span><span class="tooltiptext">D: 首付金额 (万元)</span></span>+<span class="tooltip"><span class="formula-term">T</span><span class="tooltiptext">T: 交易税费与中介费 (万元)</span></span>+<span class="tooltip"><span class="formula-term">S</span><span class="tooltiptext">S: 装修与家电投入 (万元)</span></span>)×<span class="tooltip"><span class="formula-term">r</span><span class="tooltiptext">r: 预期理财年化收益率 (%)</span></span>]
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">机会成本</div>
+                    </div>
+                    <div class="mt-5 text-2xl font-mono">+</div>
+                    <!-- H -->
+                     <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            <span class="tooltip"><span class="formula-term">H</span><span class="tooltiptext">H: 年度持有成本<br>(物业、维修等，估算为 P×0.3%)</span></span>
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">年度<br>持有成本</div>
+                    </div>
+                    <div class="mt-5 text-2xl font-mono">+</div>
+                    <!-- Amortization -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            (<span class="tooltip"><span class="formula-term">T</span><span class="tooltiptext">T: 交易税费与中介费 (万元)</span></span>/<span class="tooltip"><span class="formula-term">n</span><span class="tooltiptext">n: 预计持有年限 (年)</span></span> + <span class="tooltip"><span class="formula-term">S</span><span class="tooltiptext">S: 装修与家电投入 (万元)</span></span>/<span class="tooltip"><span class="formula-term">n</span><span class="tooltiptext">n: 预计持有年限 (年)</span></span>)
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">税费与装修<br>年化摊销</div>
+                    </div>
+                </div>
+                 <hr class="my-6">
+                 <div class="flex items-start justify-center space-x-2">
+                    <!-- Result -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            <span class="tooltip"><span class="formula-term">Result</span><span class="tooltiptext">Result: 买房年度净损益</span></span>
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">买房年度<br>净损益</div>
+                    </div>
+                    <div class="mt-5 text-2xl font-mono">=</div>
+                    <!-- Rent Saved -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            (<span class="tooltip"><span class="formula-term">R</span><span class="tooltiptext">R: 月租金 (元/月)</span></span>×12)
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">省下的<br>年租金</div>
+                    </div>
+                    <div class="mt-5 text-2xl font-mono">-</div>
+                     <!-- C_buy -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            <span class="tooltip"><span class="formula-term">C_buy</span><span class="tooltiptext">C_buy: 买房总年化成本</span></span>
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">买房总<br>年化成本</div>
+                    </div>
+                    <div class="mt-5 text-2xl font-mono">+</div>
+                    <!-- Appreciation -->
+                    <div class="formula-card mt-5">
+                        <div class="formula-component text-lg">
+                            (<span class="tooltip"><span class="formula-term">P</span><span class="tooltiptext">P: 房产总价 (万元)</span></span>×<span class="tooltip"><span class="formula-term">g</span><span class="tooltiptext">g: 房价年化涨跌幅预期 (%)</span></span>)
+                        </div>
+                        <div class="formula-arrow">↑</div>
+                        <div class="formula-explanation">房价年化<br>涨跌额</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Module 2: Input Panel -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-6 border-b pb-4">参数输入矩阵</h2>
+                <form id="calculator-form" class="space-y-6">
                     
-                    <div>
-                        <label for="totalPrice" class="block text-sm font-medium text-gray-700">房产总价 (万元)</label>
-                        <input type="number" id="totalPrice" value="500" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+                    <fieldset class="border border-gray-200 p-4 rounded-md">
+                        <legend class="text-lg font-semibold px-2 text-indigo-700">房产交易</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label for="housePrice" class="block text-sm font-medium text-gray-700">总价 (万)</label>
+                                <input type="number" id="housePrice" value="200" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="downPayment" class="block text-sm font-medium text-gray-700">首付 (万)</label>
+                                <input type="number" id="downPayment" value="130" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="renovationCost" class="block text-sm font-medium text-gray-700">装修费 (万)</label>
+                                <input type="number" id="renovationCost" value="20" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="buyTaxFee" class="block text-sm font-medium text-gray-700">买入税费 (万)</label>
+                                <input type="number" id="buyTaxFee" value="6" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="durationYears" class="block text-sm font-medium text-gray-700">持有年限</label>
+                                <input type="number" id="durationYears" value="10" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="houseGrowthRate" class="block text-sm font-medium text-gray-700">房价年涨幅 (%)</label>
+                                <input type="number" id="houseGrowthRate" value="0.0" step="0.1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="sellCostRate" class="block text-sm font-medium text-gray-700">卖出成本率 (%)</label>
+                                <input type="number" id="sellCostRate" value="2.0" step="0.1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </fieldset>
 
-                    <div>
-                        <label for="downPayment" class="block text-sm font-medium text-gray-700">首付金额 (万元)</label>
-                        <input type="number" id="downPayment" value="150" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    
-                    <div>
-                        <label for="loanRate" class="block text-sm font-medium text-gray-700">贷款利率 (%)</label>
-                        <input type="number" id="loanRate" value="3.0" step="0.01" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+                     <fieldset class="border border-gray-200 p-4 rounded-md">
+                        <legend class="text-lg font-semibold px-2 text-indigo-700">组合贷款</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                             <div>
+                                <label for="loanPhfAmount" class="block text-sm font-medium text-gray-700">公积金贷款额 (万)</label>
+                                <input type="number" id="loanPhfAmount" value="60" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="loanPhfRate" class="block text-sm font-medium text-gray-700">公积金利率 (%)</label>
+                                <input type="number" id="loanPhfRate" value="2.85" step="0.01" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="loanCommAmount" class="block text-sm font-medium text-gray-700">商贷额 (万)</label>
+                                <input type="number" id="loanCommAmount" value="10" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="loanCommRate" class="block text-sm font-medium text-gray-700">商贷利率 (%)</label>
+                                <input type="number" id="loanCommRate" value="3.05" step="0.01" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="loanYears" class="block text-sm font-medium text-gray-700">贷款年限</label>
+                                <input type="number" id="loanYears" value="30" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="loanMethod" class="block text-sm font-medium text-gray-700">还款方式</label>
+                                <select id="loanMethod" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                                    <option value="EP">等额本金</option>
+                                    <option value="EI">等额本息</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
 
-                    <div>
-                        <label for="investmentReturnRate" class="block text-sm font-medium text-gray-700">预期理财收益率 (%)</label>
-                        <input type="number" id="investmentReturnRate" value="2.5" step="0.01" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="renovationCost" class="block text-sm font-medium text-gray-700">装修投入 (万元)</label>
-                        <input type="number" id="renovationCost" value="20" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="transactionFees" class="block text-sm font-medium text-gray-700">交易税费 (万元)</label>
-                        <input type="number" id="transactionFees" value="10" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="monthlyRent" class="block text-sm font-medium text-gray-700">同地段月租金 (元)</label>
-                        <input type="number" id="monthlyRent" value="7000" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="holdingYears" class="block text-sm font-medium text-gray-700">预计持有年限 (年)</label>
-                        <input type="number" id="holdingYears" value="10" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-
-                    <div>
-                        <label for="appreciationRate" class="block text-sm font-medium text-gray-700">房价年化涨跌幅预期 (%)</label>
-                        <input type="number" id="appreciationRate" value="1.0" step="0.1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
+                    <fieldset class="border border-gray-200 p-4 rounded-md">
+                        <legend class="text-lg font-semibold px-2 text-indigo-700">租房与金融</legend>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                             <div>
+                                <label for="rentStart" class="block text-sm font-medium text-gray-700">初始月租 (元)</label>
+                                <input type="number" id="rentStart" value="5000" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="rentGrowthRate" class="block text-sm font-medium text-gray-700">租金年涨幅 (%)</label>
+                                <input type="number" id="rentGrowthRate" value="2.0" step="0.1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="investReturnRate" class="block text-sm font-medium text-gray-700">理财年化收益率 (%)</label>
+                                <input type="number" id="investReturnRate" value="2.5" step="0.01" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="holdingCostYear" class="block text-sm font-medium text-gray-700">年持有费 (万)</label>
+                                <input type="number" id="holdingCostYear" value="0.4" step="0.1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                             <div>
+                                <label for="inflationRate" class="block text-sm font-medium text-gray-700">预期通胀率 (%)</label>
+                                <input type="number" id="inflationRate" value="2.0" step="0.1" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </fieldset>
 
                     <div class="pt-4">
-                        <button type="button" onclick="calculate()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            计 算
+                        <button type="button" onclick="runSimulation()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                            开始精算
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Result Panel -->
-            <div id="result-panel" class="bg-white p-6 rounded-lg shadow-md">
-                 <div id="result-placeholder" class="result-panel-placeholder">
+            <!-- Module 3: Result Panel -->
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                 <h2 class="text-2xl font-bold mb-6 border-b pb-4">精算结果 (Output Matrix)</h2>
+                 <div id="result-placeholder" class="result-panel-placeholder h-full">
                     <div class="text-center text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 8h.01M15 8h.01M15 14h.01M18 17h.01M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 8h.01M15 8h.01M15 14h.01M18 17h.01M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <p class="mt-2 text-lg">结果将在此处显示</p>
                     </div>
                 </div>
-                <div id="result-content" class="hidden">
-                    <!-- Recommendation will be injected here -->
+                <div id="result-content" class="hidden space-y-6">
+                    <!-- Core Conclusion -->
+                    <div id="conclusion-card"></div>
+                    <!-- Financial Metrics -->
+                    <div id="metrics-card" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                    <!-- Chart -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">净资产增长曲线</h3>
+                        <canvas id="wealth-chart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -109,43 +326,233 @@
     </div>
 
     <script>
-        function formatMoney(value) {
-            return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(value);
+        let wealthChart = null;
+
+        function formatMoney(value, unit = '元', precision = 2) {
+             if (value > 100000000) { // If over 1亿
+                value /= 100000000;
+                unit = '亿';
+            } else if (value > 10000) { // If over 1万
+                value /= 10000;
+                unit = '万';
+            }
+            return new Intl.NumberFormat('zh-CN', { 
+                minimumFractionDigits: precision,
+                maximumFractionDigits: precision 
+            }).format(value) + ` ${unit}`;
+        }
+        
+        /**
+         * Calculates monthly mortgage payment details.
+         * @param {number} totalPrincipal - Total initial principal of this loan component.
+         * @param {number} annualRate - Annual interest rate (e.g., 0.0285).
+         * @param {number} loanYears - Total years of the loan.
+         * @param {number} currentMonth - The current month of the entire simulation (1-indexed).
+         * @param {number} startMonth - The month this specific loan component started (1-indexed relative to simulation start).
+         * @param {string} method - 'EI' for Equal Installment, 'EP' for Equal Principal.
+         * @returns {object} { total: monthly payment, interest: interest part, principal: principal part, remainingPrincipal: current remaining principal }
+         */
+        function calculateMonthlyLoan(totalPrincipal, annualRate, loanYears, currentMonth, startMonth, method) {
+            const monthlyRate = annualRate / 12;
+            const totalMonths = loanYears * 12;
+
+            if (totalPrincipal <= 0 || currentMonth < startMonth || currentMonth > (startMonth + totalMonths -1)) {
+                 return { total: 0, interest: 0, principal: 0, remainingPrincipal: 0 };
+            }
+
+            // Calculate the specific month within THIS loan's term
+            const loanTermMonth = currentMonth - startMonth + 1;
+
+            if (method === 'EI') { // 等额本息
+                const monthlyPayment = totalPrincipal * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+                const remainingPrincipalAtPrevMonth = totalPrincipal * Math.pow(1 + monthlyRate, loanTermMonth - 1) - monthlyPayment * (Math.pow(1 + monthlyRate, loanTermMonth - 1) - 1) / monthlyRate;
+                const interest = remainingPrincipalAtPrevMonth * monthlyRate;
+                const principalPaid = monthlyPayment - interest;
+                const remainingPrincipal = remainingPrincipalAtPrevMonth - principalPaid;
+
+                return { total: monthlyPayment, interest: interest, principal: principalPaid, remainingPrincipal: remainingPrincipal > 0 ? remainingPrincipal : 0 };
+            } else { // EP, 等额本金
+                const monthlyPrincipalPaid = totalPrincipal / totalMonths;
+                const remainingPrincipalAtPrevMonth = totalPrincipal - (monthlyPrincipalPaid * (loanTermMonth - 1));
+                const interest = remainingPrincipalAtPrevMonth * monthlyRate;
+                const monthlyPayment = monthlyPrincipalPaid + interest;
+                const remainingPrincipal = remainingPrincipalAtPrevMonth - monthlyPrincipalPaid;
+                
+                return { total: monthlyPayment, interest: interest, principal: monthlyPrincipalPaid, remainingPrincipal: remainingPrincipal > 0 ? remainingPrincipal : 0 };
+            }
         }
 
-        function calculate() {
-            // Get values from form and convert units
-            const totalPrice = parseFloat(document.getElementById('totalPrice').value) * 10000;
-            const downPayment = parseFloat(document.getElementById('downPayment').value) * 10000;
-            const loanRate = parseFloat(document.getElementById('loanRate').value) / 100;
-            const investmentReturnRate = parseFloat(document.getElementById('investmentReturnRate').value) / 100;
-            const renovationCost = parseFloat(document.getElementById('renovationCost').value) * 10000;
-            const transactionFees = parseFloat(document.getElementById('transactionFees').value) * 10000;
-            const monthlyRent = parseFloat(document.getElementById('monthlyRent').value);
-            const holdingYears = parseInt(document.getElementById('holdingYears').value);
-            const appreciationRate = parseFloat(document.getElementById('appreciationRate').value) / 100;
+        // --- Binary Search for Break-even Growth Rate ---
+        function findBreakEvenGrowth(initialInputs) {
+            let lowerBound = -0.10; // -10%
+            let upperBound = 0.10;  // +10%
+            let iterations = 100; // Sufficient for precision
 
-            // --- Calculations ---
-            const loanAmount = totalPrice - downPayment;
+            for (let i = 0; i < iterations; i++) {
+                let mid = (lowerBound + upperBound) / 2;
+                if (mid === 0) mid = 0.0000000001; // Avoid division by zero if mid is exactly 0
+
+                let inputs = {...initialInputs, HOUSE_GROWTH_RATE: mid};
+                let { netDifference } = runMonthlySimulation(inputs);
+
+                if (netDifference > 0) { // If buyer wealth is higher, need lower growth rate
+                    upperBound = mid;
+                } else { // If renter wealth is higher, need higher growth rate
+                    lowerBound = mid;
+                }
+            }
+            return (lowerBound + upperBound) / 2;
+        }
+
+        // --- Main Simulation Logic ---
+        function runMonthlySimulation(inputs, includeHistory = true) {
+            let { HOUSE_PRICE, HOUSE_GROWTH_RATE, DOWNPAYMENT, RENOVATION_COST, BUY_TAX_FEE, SELL_COST_RATE,
+                  LOAN_PHF_AMOUNT, LOAN_PHF_RATE, LOAN_COMM_AMOUNT, LOAN_COMM_RATE, LOAN_YEARS, LOAN_METHOD,
+                  RENT_START, RENT_GROWTH_RATE, INVEST_RETURN_RATE, HOLDING_COST_YEAR, INFLATION_RATE, DURATION_YEARS } = inputs;
             
-            // Simplified annual interest calculation. For a real mortgage, this would be an amortization schedule.
-            const loanInterestAnnual = loanAmount * loanRate;
+            // Convert rates to monthly, and amounts to actual units
+            HOUSE_GROWTH_RATE /= 12;
+            RENT_GROWTH_RATE /= 12; // Annual to monthly. PRD specifies annual, so apply as (1+annual)^(1/12)
+            INVEST_RETURN_RATE /= 12;
+            INFLATION_RATE /= 12;
+
+            const months = DURATION_YEARS * 12;
+            const totalInitialCapital = DOWNPAYMENT + RENOVATION_COST + BUY_TAX_FEE;
+
+            let buyerLiquidAssets = 0; // The Delta Effect
+            let renterWealth = totalInitialCapital; // Initial investment for renter
+
+            let remPhfPrincipal = LOAN_PHF_AMOUNT;
+            let remCommPrincipal = LOAN_COMM_AMOUNT;
             
-            const opportunityCost = (downPayment + renovationCost + transactionFees) * investmentReturnRate;
-            const propertyMaintenanceFee = totalPrice * 0.003;
-            const expensesAmortization = (renovationCost + transactionFees) / holdingYears;
-            const propertyValueChange = totalPrice * appreciationRate;
+            // For Chart.js history
+            const buyerWealthHistory = [ (HOUSE_PRICE * (1 - SELL_COST_RATE) - LOAN_PHF_AMOUNT - LOAN_COMM_AMOUNT) / 10000 ]; // Initial net equity from buying + liquid assets (0 initially)
+            const renterWealthHistory = [ totalInitialCapital / 10000 ];
+            const labels = ['初始'];
 
-            const buyAnnualCost = loanInterestAnnual + opportunityCost + propertyMaintenanceFee + expensesAmortization - propertyValueChange;
-            const rentAnnualCost = monthlyRent * 12;
+            let firstYearTotalInterest = 0; // For Equity Yield
 
-            // --- Display Results ---
+            for (let m = 1; m <= months; m++) {
+                // Rent calculation (monthly growth)
+                const currentMonthlyRent = RENT_START * Math.pow(1 + (RENT_GROWTH_RATE * 12), (m-1)/12); // PRD says annual growth applied each year
+
+                // Mortgage payment calculation
+                const phf = calculateMonthlyLoan(LOAN_PHF_AMOUNT, LOAN_PHF_RATE, LOAN_YEARS, m, 1, LOAN_METHOD);
+                const comm = calculateMonthlyLoan(LOAN_COMM_AMOUNT, LOAN_COMM_RATE, LOAN_YEARS, m, 1, LOAN_METHOD);
+                
+                const totalMonthlyMortgagePayment = phf.total + comm.total;
+                const totalMonthlyInterest = phf.interest + comm.interest;
+                const totalMonthlyPrincipalPaid = phf.principal + comm.principal;
+                
+                remPhfPrincipal = phf.remainingPrincipal;
+                remCommPrincipal = comm.remainingPrincipal;
+
+                if (m <= 12) { // Sum interest for the first year
+                     firstYearTotalInterest += totalMonthlyInterest;
+                }
+
+                // Buyer's Path
+                const monthlyHoldingCost = HOLDING_COST_YEAR / 12;
+                const cashFlowDelta = currentMonthlyRent - (totalMonthlyMortgagePayment + monthlyHoldingCost);
+                buyerLiquidAssets = (buyerLiquidAssets + cashFlowDelta) * (1 + INVEST_RETURN_RATE); // PRD invest return is annual, so /12. But PRD example shows invest return per month. I'll use PRD example (monthly compound with annual rate/12)
+                
+                // Renter's Path
+                renterWealth = (renterWealth * (1 + INVEST_RETURN_RATE)) - currentMonthlyRent;
+                
+                // Store history for chart (annual points)
+                if (includeHistory && m % 12 === 0) {
+                    const houseValueAtYear = HOUSE_PRICE * Math.pow(1 + (HOUSE_GROWTH_RATE * 12), m / 12);
+                    const netHouseEquity = (houseValueAtYear * (1 - SELL_COST_RATE)) - (remPhfPrincipal + remCommPrincipal);
+                    const buyerTotalWealth = netHouseEquity + buyerLiquidAssets;
+                    
+                    buyerWealthHistory.push(buyerTotalWealth / 10000);
+                    renterWealthHistory.push(renterWealth / 10000);
+                    labels.push(`第 ${m/12} 年`);
+                }
+            }
+            
+            // --- Final Evaluation ---
+            const finalHouseValue = HOUSE_PRICE * Math.pow(1 + (HOUSE_GROWTH_RATE * 12), DURATION_YEARS); // PRD uses annual growth rate
+            const netHouseEquity = (finalHouseValue * (1 - SELL_COST_RATE)) - (remPhfPrincipal + remCommPrincipal);
+            const buyerTotalWealth = netHouseEquity + buyerLiquidAssets;
+            const netDifference = buyerTotalWealth - renterWealth;
+
+            // --- Advanced Metrics ---
+            // 租金杠杆收益率 (Rental Equity Yield)
+            const equityYield = (RENT_START * 12 - firstYearTotalInterest - HOLDING_COST_YEAR) / totalInitialCapital;
+
+            // 债务稀释收益 (Debt Dilution Bonus)
+            // This needs to track remaining principal over time, then apply inflation.
+            // Simplified: Remaining total principal at the end discounted by inflation.
+            const remainingLoanPrincipal = remPhfPrincipal + remCommPrincipal;
+            const debtDilutionBonus = remainingLoanPrincipal * (1 - (1 / Math.pow(1 + INFLATION_RATE * 12, months))); // Simplified: value of remaining principal lost to inflation.
+
+            return {
+                netDifference,
+                equityYield,
+                debtDilutionBonus,
+                buyerWealthHistory,
+                renterWealthHistory,
+                chartLabels: labels,
+                finalRemPhfPrincipal: remPhfPrincipal,
+                finalRemCommPrincipal: remCommPrincipal,
+            };
+        }
+        
+        // --- Main Function ---
+        function runSimulation() {
+            const inputs = {
+                HOUSE_PRICE: parseFloat(document.getElementById('housePrice').value) * 10000,
+                DOWNPAYMENT: parseFloat(document.getElementById('downPayment').value) * 10000,
+                RENOVATION_COST: parseFloat(document.getElementById('renovationCost').value) * 10000,
+                BUY_TAX_FEE: parseFloat(document.getElementById('buyTaxFee').value) * 10000,
+                DURATION_YEARS: parseInt(document.getElementById('durationYears').value),
+                HOUSE_GROWTH_RATE: parseFloat(document.getElementById('houseGrowthRate').value) / 100,
+                SELL_COST_RATE: parseFloat(document.getElementById('sellCostRate').value) / 100,
+                LOAN_PHF_AMOUNT: parseFloat(document.getElementById('loanPhfAmount').value) * 10000,
+                LOAN_PHF_RATE: parseFloat(document.getElementById('loanPhfRate').value) / 100,
+                LOAN_COMM_AMOUNT: parseFloat(document.getElementById('loanCommAmount').value) * 10000,
+                LOAN_COMM_RATE: parseFloat(document.getElementById('loanCommRate').value) / 100,
+                LOAN_YEARS: parseInt(document.getElementById('loanYears').value),
+                LOAN_METHOD: document.getElementById('loanMethod').value,
+                RENT_START: parseFloat(document.getElementById('rentStart').value),
+                RENT_GROWTH_RATE: parseFloat(document.getElementById('rentGrowthRate').value) / 100,
+                INVEST_RETURN_RATE: parseFloat(document.getElementById('investReturnRate').value) / 100,
+                HOLDING_COST_YEAR: parseFloat(document.getElementById('holdingCostYear').value) * 10000,
+                INFLATION_RATE: parseFloat(document.getElementById('inflationRate').value) / 100,
+            };
+            
+            // Input Validation
+            if (inputs.DURATION_YEARS <= 0 || inputs.LOAN_YEARS <= 0) {
+                alert('持有年限和贷款年限必须大于0');
+                return;
+            }
+            if (inputs.DOWNPAYMENT + inputs.LOAN_PHF_AMOUNT + inputs.LOAN_COMM_AMOUNT > inputs.HOUSE_PRICE + 1) { // allow small rounding diffs
+                 alert('首付加贷款总额不能超过房产总价！');
+                 return;
+            }
+            if (inputs.DOWNPAYMENT + inputs.LOAN_PHF_AMOUNT + inputs.LOAN_COMM_AMOUNT < inputs.HOUSE_PRICE - 1) { // allow small rounding diffs
+                 alert('首付加贷款总额不能小于房产总价！');
+                 return;
+            }
+
+
+            const results = runMonthlySimulation(inputs);
+
+            // Break-even growth rate calculation
+            const breakEvenG = findBreakEvenGrowth(inputs);
+
+
+            // --- Display ---
             const resultPlaceholder = document.getElementById('result-placeholder');
             const resultContent = document.getElementById('result-content');
             resultPlaceholder.classList.add('hidden');
             resultContent.classList.remove('hidden');
 
-            const recommendation = buyAnnualCost < rentAnnualCost ? {
+            const conclusionCard = document.getElementById('conclusion-card');
+            const metricsCard = document.getElementById('metrics-card');
+
+            const conclusion = results.netDifference > 0 ? {
                 text: '建议购房',
                 bgColor: 'bg-green-100',
                 textColor: 'text-green-800'
@@ -155,58 +562,82 @@
                 textColor: 'text-orange-800'
             };
 
-            resultContent.innerHTML = `
-                <div class="${recommendation.bgColor} ${recommendation.textColor} p-4 rounded-lg mb-6 text-center">
-                    <h2 class="text-2xl font-bold">${recommendation.text}</h2>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 text-center mb-6">
-                    <div>
-                        <p class="text-sm text-gray-500">买房年化净成本</p>
-                        <p class="text-2xl font-bold text-red-600">${formatMoney(buyAnnualCost)}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500">租房年化净成本</p>
-                        <p class="text-2xl font-bold text-green-600">${formatMoney(rentAnnualCost)}</p>
-                    </div>
-                </div>
-
-                <h3 class="text-xl font-bold mb-4 border-b pb-2">成本明细</h3>
-                
-                <div class="space-y-3">
-                    <h4 class="font-semibold text-lg">买房成本构成 (年化)</h4>
-                    <ul class="list-disc list-inside space-y-2 text-gray-700">
-                        <li>
-                            <span>贷款利息支出:</span>
-                            <span class="font-medium float-right">${formatMoney(loanInterestAnnual)}</span>
-                        </li>
-                        <li>
-                            <span>机会成本 (首付及投入资金的理财收益):</span>
-                            <span class="font-medium float-right">${formatMoney(opportunityCost)}</span>
-                        </li>
-                        <li>
-                            <span>物业取暖等持有费用 (估算):</span>
-                            <span class="font-medium float-right">${formatMoney(propertyMaintenanceFee)}</span>
-                        </li>
-                        <li>
-                            <span>装修及税费摊销:</span>
-                            <span class="font-medium float-right">${formatMoney(expensesAmortization)}</span>
-                        </li>
-                        <li class="border-t pt-2">
-                            <span>房价增值收益 (抵扣成本):</span>
-                            <span class="font-medium float-right text-green-600">-${formatMoney(propertyValueChange)}</span>
-                        </li>
-                    </ul>
-
-                    <h4 class="font-semibold text-lg pt-4">租房成本构成 (年化)</h4>
-                     <ul class="list-disc list-inside space-y-2 text-gray-700">
-                        <li>
-                            <span>租金总支出:</span>
-                            <span class="font-medium float-right">${formatMoney(rentAnnualCost)}</span>
-                        </li>
-                    </ul>
+            conclusionCard.innerHTML = `
+                <div class="${conclusion.bgColor} ${conclusion.textColor} p-4 rounded-lg text-center">
+                    <p class="text-sm">核心结论：${inputs.DURATION_YEARS}年后</p>
+                    <h2 class="text-2xl font-bold">${conclusion.text}</h2>
+                    <p class="font-semibold mt-1">买房比租房净资产${results.netDifference > 0 ? '多' : '少'} ${formatMoney(Math.abs(results.netDifference), '万')}</p>
                 </div>
             `;
+
+            metricsCard.innerHTML = `
+                <div class="metric-card p-3 rounded-lg text-center">
+                    <p class="text-sm text-gray-500">租金杠杆收益率</p>
+                    <p class="text-xl font-bold text-indigo-600">${(results.equityYield * 100).toFixed(2)}%</p>
+                </div>
+                <div class="metric-card p-3 rounded-lg text-center">
+                    <p class="text-sm text-gray-500">房价抗跌阈值</p>
+                    <p class="text-xl font-bold text-indigo-600">${(breakEvenG * 100).toFixed(2)}%</p>
+                </div>
+                <div class="metric-card p-3 rounded-lg text-center">
+                    <p class="text-sm text-gray-500">债务稀释收益</p>
+                    <p class="text-xl font-bold text-indigo-600">${formatMoney(results.debtDilutionBonus, '万')}</p>
+                </div>
+            `;
+
+            if (wealthChart) {
+                wealthChart.destroy();
+            }
+            const ctx = document.getElementById('wealth-chart').getContext('2d');
+            wealthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: results.chartLabels,
+                    datasets: [
+                        {
+                            label: '买房者净资产',
+                            data: results.buyerWealthHistory,
+                            borderColor: 'rgb(22, 163, 74)',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            fill: true,
+                            tension: 0.2
+                        },
+                        {
+                            label: '租房者净资产',
+                            data: results.renterWealthHistory,
+                            borderColor: 'rgb(234, 88, 12)',
+                            backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                            fill: true,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                 options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatMoney(context.raw * 10000, '元', 2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, ticks) {
+                                    return formatMoney(value * 10000, '元', 0); // Display as 万 or 亿
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
